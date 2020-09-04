@@ -15,6 +15,8 @@
  */
 package io.netty.handler.ssl;
 
+import io.netty.util.internal.SuppressJava6Requirement;
+
 import javax.net.ssl.SNIHostName;
 import javax.net.ssl.SNIMatcher;
 import javax.net.ssl.SNIServerName;
@@ -25,6 +27,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+@SuppressJava6Requirement(reason = "Usage guarded by java version check")
 final class Java8SslUtils {
 
     private Java8SslUtils() { }
@@ -48,11 +51,25 @@ final class Java8SslUtils {
     }
 
     static void setSniHostNames(SSLParameters sslParameters, List<String> names) {
+        sslParameters.setServerNames(getSniHostNames(names));
+    }
+
+    static List getSniHostNames(List<String> names) {
+        if (names == null || names.isEmpty()) {
+            return Collections.emptyList();
+        }
         List<SNIServerName> sniServerNames = new ArrayList<SNIServerName>(names.size());
         for (String name: names) {
             sniServerNames.add(new SNIHostName(name));
         }
-        sslParameters.setServerNames(sniServerNames);
+        return sniServerNames;
+    }
+
+    static List getSniHostName(byte[] hostname) {
+        if (hostname == null || hostname.length == 0) {
+            return Collections.emptyList();
+        }
+        return Collections.singletonList(new SNIHostName(hostname));
     }
 
     static boolean getUseCipherSuitesOrder(SSLParameters sslParameters) {
